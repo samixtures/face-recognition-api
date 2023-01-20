@@ -1,6 +1,7 @@
 const { response } = require('express');
 const express = require('express')
 const bodyParser = require('body-parser') // just a package we have to include
+const cors = require('cors')
 const database = {
     users: [
         {
@@ -25,19 +26,66 @@ const database = {
 
 const app = express();
 app.use(bodyParser.json()); // this is just something we have to do
+app.use(cors());
 
 app.get('/', (req, res)=> {
-    res.send("This is the get response gabagoo");
+    res.send(database);
 })
 
 //Signin route
 app.post('/signin', (req, res)=> {
     if (req.body.email === database.users[0].email &&
         req.body.password === database.users[0].password) {
-            res.json("successfully signed in!")
+            res.json("success")
         }
     else {
         res.status(400).json("error logging in");
+    }
+})
+
+//Register route
+app.post('/register', (req, res)=> {
+    const { email, name, password } = req.body;
+    database.users.push({
+        id: '125',
+        name: name,
+        email: email,
+        password: password,
+        entries: '0',
+        joined: new Date()
+    })
+    // res.json(database.users.at(-1)); 
+    res.json(database.users[database.users.length-1])
+})
+
+//Profile route
+app.get('/profile/:id', (req, res)=> {
+    const { id } = req.params;
+    let found = false;
+    database.users.forEach(user => {
+        if (user.id === id) {
+            found = true;
+            res.json(user);
+        }
+    })
+    if (!found) {
+        res.status(400).json("not found");
+    }
+})
+
+//Image route (increments entries object)
+app.put('/image', (req, res) => {
+    const { id } = req.body;
+    let incremented = false;
+    database.users.forEach(user => {
+        if (user.id === id) {
+            incremented = true;
+            user.entries = parseInt(user.entries) + 1;
+            res.json(user.entries)
+        }
+    })
+    if (!incremented) {
+        res.status(400).json("id not found");
     }
 })
 
